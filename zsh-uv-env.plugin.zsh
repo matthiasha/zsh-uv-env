@@ -60,21 +60,11 @@ autoenv_chpwd() {
     fi
 }
 
-# Function to watch for new venv creation
-watch_venv_creation() {
-    local venv_path=$(find_venv)
-    if [[ -d "$venv_path" ]] && ! is_venv_active; then
-        source "$venv_path/bin/activate"
-        AUTOENV_ACTIVATED=1
-    fi
-}
-
-# Register the chpwd hook
-autoload -U add-zsh-hook
-add-zsh-hook chpwd autoenv_chpwd
-
 # Register precmd hook to watch for new venv creation
-add-zsh-hook precmd watch_venv_creation
+# A cheaper alternative would be the chpwd hook, but 
+# we would miss the case where a venv is created or deleted
+autoload -U add-zsh-hook
+add-zsh-hook precmd autoenv_chpwd
 
 # Run once when shell starts
 autoenv_chpwd
