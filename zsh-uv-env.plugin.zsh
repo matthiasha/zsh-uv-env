@@ -36,6 +36,36 @@ find_venv() {
 # Variable to track if we activated the venv
 typeset -g AUTOENV_ACTIVATED=0
 
+# Arrays to store post-hooks
+typeset -ga AUTOSWITCH_ACTIVATE_HOOKS=()
+typeset -ga AUTOSWITCH_DEACTIVATE_HOOKS=()
+
+# Function to add post-activation hook
+autoswitch_add_post_hook_on_activate() {
+    AUTOSWITCH_ACTIVATE_HOOKS+=("$1")
+}
+
+# Function to add post-deactivation hook
+autoswitch_add_post_hook_on_deactivate() {
+    AUTOSWITCH_DEACTIVATE_HOOKS+=("$1")
+}
+
+# Function to execute post-activation hooks
+_run_autoswitch_activate_hooks() {
+    local hook
+    for hook in "${AUTOSWITCH_ACTIVATE_HOOKS[@]}"; do
+        eval "$hook"
+    done
+}
+
+# Function to execute post-deactivation hooks
+_run_autoswitch_deactivate_hooks() {
+    local hook
+    for hook in "${AUTOSWITCH_DEACTIVATE_HOOKS[@]}"; do
+        eval "$hook"
+    done
+}
+
 # Function to handle directory changes
 autoenv_chpwd() {
     # Don't do anything if a virtualenv is already manually activated
@@ -50,12 +80,16 @@ autoenv_chpwd() {
         if ! is_venv_active; then
             source "$venv_path/bin/activate"
             AUTOENV_ACTIVATED=1
+            # Run post-activation hooks
+            _run_autoswitch_activate_hooks
         fi
     else
         # If no venv found and we activated one before, deactivate it
         if [[ $AUTOENV_ACTIVATED == 1 ]] && is_venv_active; then
             deactivate
             AUTOENV_ACTIVATED=0
+            # Run post-deactivation hooks
+            _run_autoswitch_deactivate_hooks
         fi
     fi
 }
