@@ -36,30 +36,29 @@ find_venv() {
 # Variable to track if we activated the venv
 typeset -g AUTOENV_ACTIVATED=0
 
-# Arrays to store post-hooks
+# Define arrays for hooks early so they're available throughout the session
 typeset -ga AUTOSWITCH_ACTIVATE_HOOKS=()
 typeset -ga AUTOSWITCH_DEACTIVATE_HOOKS=()
 
-# Function to add post-activation hook
+# Add the hook registration functions
 autoswitch_add_post_hook_on_activate() {
     AUTOSWITCH_ACTIVATE_HOOKS+=("$1")
 }
 
-# Function to add post-deactivation hook
 autoswitch_add_post_hook_on_deactivate() {
     AUTOSWITCH_DEACTIVATE_HOOKS+=("$1")
 }
 
-# Function to execute post-activation hooks
-_run_autoswitch_activate_hooks() {
+# Function to execute all activation hooks
+_run_activate_hooks() {
     local hook
     for hook in "${AUTOSWITCH_ACTIVATE_HOOKS[@]}"; do
         eval "$hook"
     done
 }
 
-# Function to execute post-deactivation hooks
-_run_autoswitch_deactivate_hooks() {
+# Function to execute all deactivation hooks
+_run_deactivate_hooks() {
     local hook
     for hook in "${AUTOSWITCH_DEACTIVATE_HOOKS[@]}"; do
         eval "$hook"
@@ -80,23 +79,21 @@ autoenv_chpwd() {
         if ! is_venv_active; then
             source "$venv_path/bin/activate"
             AUTOENV_ACTIVATED=1
-            # Run post-activation hooks
-            _run_autoswitch_activate_hooks
+            # Run activation hooks
+            _run_activate_hooks
         fi
     else
         # If no venv found and we activated one before, deactivate it
         if [[ $AUTOENV_ACTIVATED == 1 ]] && is_venv_active; then
             deactivate
             AUTOENV_ACTIVATED=0
-            # Run post-deactivation hooks
-            _run_autoswitch_deactivate_hooks
+            # Run deactivation hooks
+            _run_deactivate_hooks
         fi
     fi
 }
 
 # Register precmd hook to watch for new venv creation
-# A cheaper alternative would be the chpwd hook, but 
-# we would miss the case where a venv is created or deleted
 autoload -U add-zsh-hook
 add-zsh-hook precmd autoenv_chpwd
 
