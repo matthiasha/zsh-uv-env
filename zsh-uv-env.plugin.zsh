@@ -17,21 +17,21 @@ find_venv() {
     fi
 
     while [[ "$current_dir" != "$stop_dir" ]]; do
-      for _v in .venv venv; do
-        if [[ -d "$current_dir/$_v" && -r "$current_dir/$_v/bin/activate" ]]; then
-          echo "$current_dir/$_v"
-          return 0
-        fi
-      done
-      current_dir="$(dirname "$current_dir")"
+        for _v in .venv venv; do
+            if [[ -d "$current_dir/$_v" && -r "$current_dir/$_v/bin/activate" ]]; then
+                echo "$current_dir/$_v"
+                return 0
+            fi
+        done
+        current_dir="$(dirname "$current_dir")"
     done
 
     # Check stop_dir itself
     for _v in .venv venv; do
-      if [[ -d "$stop_dir/$_v" && -r "$stop_dir/$_v/bin/activate" ]]; then
-        echo "$stop_dir/$_v"
-        return 0
-      fi
+        if [[ -d "$stop_dir/$_v" && -r "$stop_dir/$_v/bin/activate" ]]; then
+            echo "$stop_dir/$_v"
+            return 0
+        fi
     done
 
     return 1
