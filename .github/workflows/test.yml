@@ -7,19 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  test-bash:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        shell: [bash, zsh]
+    name: Test with Bash
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install zsh (if needed)
-      if: matrix.shell == 'zsh'
-      run: sudo apt-get update && sudo apt-get install -y zsh
     
     - name: Install uv
       run: |
@@ -27,16 +20,16 @@ jobs:
         echo "$HOME/.cargo/bin" >> $GITHUB_PATH
     
     - name: Run find_venv function tests
-      shell: ${{ matrix.shell }}
+      shell: bash
       run: ./test-find-venv.sh
     
-    - name: Run full plugin tests (bash compatibility mode)
+    - name: Run full plugin tests
       shell: bash
       run: ./test.sh
       continue-on-error: true  # Allow this to fail as it tests zsh-specific features
     
     - name: Test with real uv projects
-      shell: ${{ matrix.shell }}
+      shell: bash
       run: |
         # Test .venv project
         mkdir -p test-project-dotenv
@@ -79,3 +72,22 @@ jobs:
         else
           echo "⚠️  find_venv function not available, skipping real project test"
         fi
+
+  test-zsh:
+    runs-on: ubuntu-latest
+    name: Test with Zsh
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install zsh
+      run: sudo apt-get update && sudo apt-get install -y zsh
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Run find_venv function tests
+      shell: zsh {0}
+      run: ./test-find-venv.sh
