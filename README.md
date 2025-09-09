@@ -26,8 +26,12 @@ based on the current directory.
 # How It Works
 
 The plugin automatically detects and activates Python virtual environments (.venv
-directories) as you navigate through your filesystem. When you leave a directory with an
+or venv directories) as you navigate through your filesystem. When you leave a directory with an
 active virtual environment, it automatically deactivates it.
+
+The plugin searches for virtual environments in the following order of priority:
+1. `.venv` directory (uv default)
+2. `venv` directory (alternative convention)
 
 ## Post-Hooks
 

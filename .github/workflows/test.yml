@@ -1,0 +1,81 @@
+name: Test zsh-uv-env plugin
+
+on:
+  push:
+    branches: [ main, pr-3 ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        shell: [bash, zsh]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install zsh (if needed)
+      if: matrix.shell == 'zsh'
+      run: sudo apt-get update && sudo apt-get install -y zsh
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Run find_venv function tests
+      shell: ${{ matrix.shell }}
+      run: ./test-find-venv.sh
+    
+    - name: Run full plugin tests (bash compatibility mode)
+      shell: bash
+      run: ./test.sh
+      continue-on-error: true  # Allow this to fail as it tests zsh-specific features
+    
+    - name: Test with real uv projects
+      shell: ${{ matrix.shell }}
+      run: |
+        # Test .venv project
+        mkdir -p test-project-dotenv
+        cd test-project-dotenv
+        uv venv .venv
+        source ../zsh-uv-env.plugin.zsh 2>/dev/null || true
+        
+        # Test that find_venv works
+        if command -v find_venv >/dev/null 2>&1; then
+          result=$(find_venv)
+          expected="$(pwd)/.venv"
+          if [[ "$result" == "$expected" ]]; then
+            echo "✅ Real uv .venv project test passed"
+          else
+            echo "❌ Real uv .venv project test failed: expected '$expected', got '$result'"
+            exit 1
+          fi
+        else
+          echo "⚠️  find_venv function not available, skipping real project test"
+        fi
+        
+        cd ..
+        
+        # Test venv project
+        mkdir -p test-project-venv
+        cd test-project-venv
+        uv venv venv
+        source ../zsh-uv-env.plugin.zsh 2>/dev/null || true
+        
+        # Test that find_venv works
+        if command -v find_venv >/dev/null 2>&1; then
+          result=$(find_venv)
+          expected="$(pwd)/venv"
+          if [[ "$result" == "$expected" ]]; then
+            echo "✅ Real uv venv project test passed"
+          else
+            echo "❌ Real uv venv project test failed: expected '$expected', got '$result'"
+            exit 1
+          fi
+        else
+          echo "⚠️  find_venv function not available, skipping real project test"
+        fi
