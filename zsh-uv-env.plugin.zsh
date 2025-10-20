@@ -79,8 +79,18 @@ autoenv_chpwd() {
     local venv_path=$(find_venv)
 
     if [[ -n "$venv_path" ]]; then
-        # If we found a venv and none is active, activate it
-        if ! is_venv_active; then
+        # If we found a venv, check if it's different from the currently active one
+        if is_venv_active; then
+            # If the found venv is different from the active one, switch to it
+            if [[ "$venv_path" != "$VIRTUAL_ENV" ]]; then
+                deactivate
+                source "$venv_path/bin/activate"
+                AUTOENV_ACTIVATED=1
+                # Run activation hooks
+                _run_activate_hooks
+            fi
+        else
+            # No venv is active, activate the found one
             source "$venv_path/bin/activate"
             AUTOENV_ACTIVATED=1
             # Run activation hooks

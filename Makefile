@@ -1,14 +1,18 @@
-.PHONY: test test-find-venv test-plugin clean help
+.PHONY: test test-find-venv test-plugin test-switching clean help
 
 help: ## Show this help message
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-test: test-find-venv ## Run all tests
+test: test-find-venv test-switching ## Run all tests
 
 test-find-venv: ## Run focused tests for the find_venv function
 	@echo "Running find_venv function tests..."
 	./test-find-venv.sh
+
+test-switching: ## Test venv switching behavior (Issue #6)
+	@echo "Running venv switching tests..."
+	zsh ./test-venv-switching.sh
 
 test-plugin: ## Run full plugin tests (may have compatibility issues)
 	@echo "Running full plugin tests..."
